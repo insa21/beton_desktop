@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from ttkbootstrap import Style
 from PIL import Image, ImageTk
 
 # Data untuk berbagai mutu beton
@@ -17,21 +16,22 @@ class BetonCalculatorApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Beton Calculator")
-
-        # Menggunakan tema yang ada di ttkbootstrap
-        self.style = Style(theme="solar")
         self.root.geometry("1200x800")
-
+        self.bg_image = None  # Store background image reference
+        self.logo_image = None  # Store logo image reference
         self.setup_ui()
 
     def setup_ui(self):
         # Buat label untuk menampilkan gambar latar belakang
-        background_image = Image.open("background.jpg")
-        background_image = background_image.resize((1200, 800))
-        self.bg_image = ImageTk.PhotoImage(background_image)
+        try:
+            background_image = Image.open("background.jpg")
+            background_image = background_image.resize((1200, 800))
+            self.bg_image = ImageTk.PhotoImage(background_image)
 
-        background_label = tk.Label(self.root, image=self.bg_image)
-        background_label.place(x=0, y=0, relwidth=1, relheight=1)
+            background_label = tk.Label(self.root, image=self.bg_image)
+            background_label.place(x=0, y=0, relwidth=1, relheight=1)
+        except FileNotFoundError:
+            print("Background image not found!")
 
         # Frame utama untuk komponen
         frame = ttk.Frame(self.root, padding="10")
@@ -42,6 +42,17 @@ class BetonCalculatorApp:
         mutu_options = ["K100", "K150", "K225", "K250", "K275", "K300"]
         self.mutu_menu = ttk.Combobox(frame, textvariable=self.mutu_var, values=mutu_options, font=("Helvetica", 12))
         self.mutu_menu.grid(row=0, column=1, pady=10, padx=10)
+
+        # Tambahkan logo
+        try:
+            logo_image = Image.open("logo.jpg")
+            logo_image = logo_image.resize((100, 100))
+            self.logo_image = ImageTk.PhotoImage(logo_image)
+
+            logo_label = tk.Label(frame, image=self.logo_image)
+            logo_label.grid(row=0, column=2, rowspan=2, pady=10, padx=10)
+        except FileNotFoundError:
+            print("Logo image not found!")
 
         kolom_frame = ttk.Frame(frame, padding="10")
         kolom_frame.grid(row=1, column=0, columnspan=2, sticky="ew")
@@ -67,17 +78,19 @@ class BetonCalculatorApp:
         self.add_entry(plat_frame, "Tinggi Plat (m):", "tinggi_plat", 3)
         self.add_entry(plat_frame, "Jumlah Plat:", "jumlah_plat", 4)
 
-        calculate_button = ttk.Button(frame, text="Hitung Kebutuhan Material", command=self.calculate, style="primary.TButton")
+        calculate_button = ttk.Button(frame, text="Hitung Kebutuhan Material", command=self.calculate)
         calculate_button.grid(row=2, columnspan=6, pady=20, padx=10)
 
-    def add_label(self, frame, label_text, row):
-        ttk.Label(frame, text=label_text, font=("Helvetica", 14, "bold")).grid(row=row, column=0, columnspan=2, pady=10, padx=10)
+    def add_label(self, parent, text, row):
+        label = ttk.Label(parent, text=text, font=("Helvetica", 12))
+        label.grid(row=row, column=0, columnspan=2, pady=5)
 
-    def add_entry(self, frame, label_text, attribute_name, row):
-        ttk.Label(frame, text=label_text, font=("Helvetica", 12)).grid(row=row, column=0, pady=5, padx=10)
-        entry = ttk.Entry(frame, font=("Helvetica", 12))
-        entry.grid(row=row, column=1, pady=5, padx=10)
-        setattr(self, attribute_name, entry)
+    def add_entry(self, parent, label_text, var_name, row):
+        label = ttk.Label(parent, text=label_text, font=("Helvetica", 12))
+        label.grid(row=row, column=0, padx=10, pady=5, sticky="e")
+        entry = ttk.Entry(parent, font=("Helvetica", 12))
+        entry.grid(row=row, column=1, padx=10, pady=5, sticky="w")
+        setattr(self, var_name, entry)
 
     def calculate(self):
         try:
@@ -122,6 +135,8 @@ class BetonCalculatorApp:
             messagebox.showinfo("Hasil Perhitungan", result)
         except ValueError:
             messagebox.showerror("Error", "Input tidak valid. Pastikan semua nilai diisi dengan benar.")
+        except KeyError:
+            messagebox.showerror("Error", "Mutu beton tidak valid.")
 
 if __name__ == '__main__':
     root = tk.Tk()
