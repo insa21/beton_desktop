@@ -133,10 +133,10 @@ class BetonCalculatorApp:
                 self.tree.delete(row)
 
             # Insert rows for each material
-            self.tree.insert("", "end", values=("Semen", round(semen, 2)))
-            self.tree.insert("", "end", values=("Pasir", round(pasir, 2)))
-            self.tree.insert("", "end", values=("Kerikil", round(kerikil, 2)))
-            self.tree.insert("", "end", values=("Air", round(air, 2)))
+            self.tree.insert("", "end", values=("Semen", f"{round(semen, 2)} kg"))
+            self.tree.insert("", "end", values=("Pasir", f"{round(pasir, 2)} kg"))
+            self.tree.insert("", "end", values=("Kerikil", f"{round(kerikil, 2)} kg"))
+            self.tree.insert("", "end", values=("Air", f"{round(air, 2)} L"))
 
         except ValueError:
             messagebox.showerror("Error", "Input tidak valid. Pastikan semua nilai diisi dengan benar.")
