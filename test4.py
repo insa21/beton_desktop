@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from PIL import Image, ImageTk
+from ttkbootstrap import Style
 
 # Data untuk berbagai mutu beton
 Beton = {
@@ -16,26 +16,16 @@ class BetonCalculatorApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Beton Calculator")
-        self.root.geometry("1200x800")
-        self.bg_image = None  # Store background image reference
-        self.logo_image = None  # Store logo image reference
+
+        # Menggunakan tema yang ada di ttkbootstrap
+        self.style = Style(theme="solar")
+        self.root.geometry("400x790")
+
         self.setup_ui()
 
     def setup_ui(self):
-        # Buat label untuk menampilkan gambar latar belakang
-        try:
-            background_image = Image.open("background.jpg")
-            background_image = background_image.resize((1200, 800))
-            self.bg_image = ImageTk.PhotoImage(background_image)
-
-            background_label = tk.Label(self.root, image=self.bg_image)
-            background_label.place(x=0, y=0, relwidth=1, relheight=1)
-        except FileNotFoundError:
-            print("Background image not found!")
-
-        # Frame utama untuk komponen
         frame = ttk.Frame(self.root, padding="10")
-        frame.place(relwidth=1, relheight=1)
+        frame.pack(fill=tk.BOTH, expand=True)
 
         ttk.Label(frame, text="Pilih Mutu Beton:", font=("Helvetica", 12)).grid(row=0, column=0, pady=10, padx=10)
         self.mutu_var = tk.StringVar(value="K100")
@@ -43,71 +33,52 @@ class BetonCalculatorApp:
         self.mutu_menu = ttk.Combobox(frame, textvariable=self.mutu_var, values=mutu_options, font=("Helvetica", 12))
         self.mutu_menu.grid(row=0, column=1, pady=10, padx=10)
 
-        # Tambahkan logo
-        try:
-            logo_image = Image.open("logo.jpg")
-            logo_image = logo_image.resize((100, 100))
-            self.logo_image = ImageTk.PhotoImage(logo_image)
+        self.add_label(frame, "Dimensi dan Jumlah Kolom", 1)
+        self.add_entry(frame, "Panjang Kolom (m):", 2)
+        self.add_entry(frame, "Lebar Kolom (m):", 3)
+        self.add_entry(frame, "Tinggi Kolom (m):", 4)
+        self.add_entry(frame, "Jumlah Kolom:", 5)
 
-            logo_label = tk.Label(frame, image=self.logo_image)
-            logo_label.grid(row=0, column=2, rowspan=2, pady=10, padx=10)
-        except FileNotFoundError:
-            print("Logo image not found!")
+        self.add_label(frame, "Dimensi dan Jumlah Balok", 6)
+        self.add_entry(frame, "Panjang Balok (m):", 7)
+        self.add_entry(frame, "Lebar Balok (m):", 8)
+        self.add_entry(frame, "Tinggi Balok (m):", 9)
+        self.add_entry(frame, "Jumlah Balok:", 10)
 
-        kolom_frame = ttk.Frame(frame, padding="10")
-        kolom_frame.grid(row=1, column=0, columnspan=2, sticky="ew")
-        self.add_label(kolom_frame, "Dimensi dan Jumlah Kolom", 0)
-        self.add_entry(kolom_frame, "Panjang Kolom (m):", "panjang_kolom", 1)
-        self.add_entry(kolom_frame, "Lebar Kolom (m):", "lebar_kolom", 2)
-        self.add_entry(kolom_frame, "Tinggi Kolom (m):", "tinggi_kolom", 3)
-        self.add_entry(kolom_frame, "Jumlah Kolom:", "jumlah_kolom", 4)
+        self.add_label(frame, "Dimensi dan Jumlah Plat", 11)
+        self.add_entry(frame, "Panjang Plat (m):", 12)
+        self.add_entry(frame, "Lebar Plat (m):", 13)
+        self.add_entry(frame, "Tinggi Plat (m):", 14)
+        self.add_entry(frame, "Jumlah Plat:", 15)
 
-        balok_frame = ttk.Frame(frame, padding="10")
-        balok_frame.grid(row=1, column=2, columnspan=2, sticky="ew")
-        self.add_label(balok_frame, "Dimensi dan Jumlah Balok", 0)
-        self.add_entry(balok_frame, "Panjang Balok (m):", "panjang_balok", 1)
-        self.add_entry(balok_frame, "Lebar Balok (m):", "lebar_balok", 2)
-        self.add_entry(balok_frame, "Tinggi Balok (m):", "tinggi_balok", 3)
-        self.add_entry(balok_frame, "Jumlah Balok:", "jumlah_balok", 4)
+        calculate_button = ttk.Button(frame, text="Hitung Kebutuhan Material", command=self.calculate, style="primary.TButton")
+        calculate_button.grid(row=16, columnspan=2, pady=20, padx=10)
 
-        plat_frame = ttk.Frame(frame, padding="10")
-        plat_frame.grid(row=1, column=4, columnspan=2, sticky="ew")
-        self.add_label(plat_frame, "Dimensi dan Jumlah Plat", 0)
-        self.add_entry(plat_frame, "Panjang Plat (m):", "panjang_plat", 1)
-        self.add_entry(plat_frame, "Lebar Plat (m):", "lebar_plat", 2)
-        self.add_entry(plat_frame, "Tinggi Plat (m):", "tinggi_plat", 3)
-        self.add_entry(plat_frame, "Jumlah Plat:", "jumlah_plat", 4)
+    def add_label(self, frame, label_text, row):
+        ttk.Label(frame, text=label_text, font=("Helvetica", 14, "bold")).grid(row=row, columnspan=2, pady=10, padx=10)
 
-        calculate_button = ttk.Button(frame, text="Hitung Kebutuhan Material", command=self.calculate)
-        calculate_button.grid(row=2, columnspan=6, pady=20, padx=10)
-
-    def add_label(self, parent, text, row):
-        label = ttk.Label(parent, text=text, font=("Helvetica", 12))
-        label.grid(row=row, column=0, columnspan=2, pady=5)
-
-    def add_entry(self, parent, label_text, var_name, row):
-        label = ttk.Label(parent, text=label_text, font=("Helvetica", 12))
-        label.grid(row=row, column=0, padx=10, pady=5, sticky="e")
-        entry = ttk.Entry(parent, font=("Helvetica", 12))
-        entry.grid(row=row, column=1, padx=10, pady=5, sticky="w")
-        setattr(self, var_name, entry)
+    def add_entry(self, frame, label_text, row):
+        ttk.Label(frame, text=label_text, font=("Helvetica", 12)).grid(row=row, column=0, pady=5, padx=10)
+        entry = ttk.Entry(frame, font=("Helvetica", 12))
+        entry.grid(row=row, column=1, pady=5, padx=10)
+        setattr(self, f"entry_{row}", entry)
 
     def calculate(self):
         try:
-            panjang_kolom = float(self.panjang_kolom.get())
-            lebar_kolom = float(self.lebar_kolom.get())
-            tinggi_kolom = float(self.tinggi_kolom.get())
-            jumlah_kolom = int(self.jumlah_kolom.get())
+            panjang_kolom = float(self.entry_2.get())
+            lebar_kolom = float(self.entry_3.get())
+            tinggi_kolom = float(self.entry_4.get())
+            jumlah_kolom = int(self.entry_5.get())
 
-            panjang_balok = float(self.panjang_balok.get())
-            lebar_balok = float(self.lebar_balok.get())
-            tinggi_balok = float(self.tinggi_balok.get())
-            jumlah_balok = int(self.jumlah_balok.get())
+            panjang_balok = float(self.entry_7.get())
+            lebar_balok = float(self.entry_8.get())
+            tinggi_balok = float(self.entry_9.get())
+            jumlah_balok = int(self.entry_10.get())
 
-            panjang_plat = float(self.panjang_plat.get())
-            lebar_plat = float(self.lebar_plat.get())
-            tinggi_plat = float(self.tinggi_plat.get())
-            jumlah_plat = int(self.jumlah_plat.get())
+            panjang_plat = float(self.entry_12.get())
+            lebar_plat = float(self.entry_13.get())
+            tinggi_plat = float(self.entry_14.get())
+            jumlah_plat = int(self.entry_15.get())
 
             total_volume_kolom = panjang_kolom * lebar_kolom * tinggi_kolom * jumlah_kolom
             total_volume_balok = panjang_balok * lebar_balok * tinggi_balok * jumlah_balok
@@ -135,8 +106,6 @@ class BetonCalculatorApp:
             messagebox.showinfo("Hasil Perhitungan", result)
         except ValueError:
             messagebox.showerror("Error", "Input tidak valid. Pastikan semua nilai diisi dengan benar.")
-        except KeyError:
-            messagebox.showerror("Error", "Mutu beton tidak valid.")
 
 if __name__ == '__main__':
     root = tk.Tk()

@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from ttkbootstrap import Style
+from PIL import Image, ImageTk
 
 # Data untuk berbagai mutu beton
 Beton = {
@@ -16,96 +17,122 @@ class BetonCalculatorApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Beton Calculator")
+        self.root.geometry("1200x800")
 
-        # Menggunakan tema yang ada di ttkbootstrap
-        self.style = Style(theme="solar")
-        self.root.geometry("400x790")
+        self.labels = [
+            "Panjang Kolom (m):", "Lebar Kolom (m):", "Tinggi Kolom (m):", "Jumlah Kolom:",
+            "Panjang Balok (m):", "Lebar Balok (m):", "Tinggi Balok (m):", "Jumlah Balok:",
+            "Panjang Plat (m):", "Lebar Plat (m):", "Tinggi Plat (m):", "Jumlah Plat:"
+        ]
 
         self.setup_ui()
 
     def setup_ui(self):
-        frame = ttk.Frame(self.root, padding="10")
-        frame.pack(fill=tk.BOTH, expand=True)
+        try:
+            # Load background image
+            with Image.open("background.jpg") as bg_image:
+                bg_image = bg_image.resize((1490, 890))  # Resize with anti-aliasing
+                self.bg_photo = ImageTk.PhotoImage(bg_image)
 
-        ttk.Label(frame, text="Pilih Mutu Beton:", font=("Helvetica", 12)).grid(row=0, column=0, pady=10, padx=10)
+            # Create label for background
+            bg_label = tk.Label(self.root, image=self.bg_photo)
+            bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+        except FileNotFoundError:
+            print("Background image not found!")
+
+        # Create frame for form on top of background
+        form_frame = tk.Frame(self.root, bg='white', bd=2, relief=tk.RAISED)
+        form_frame.place(relx=0.5, rely=0.5, anchor='center', width=1000, height=600)
+
+        try:
+            # Load logo image
+            with Image.open("logo.jpg") as logo_image:
+                logo_image.thumbnail((120, 120))  # Resize with anti-aliasing
+                self.logo_photo = ImageTk.PhotoImage(logo_image)
+
+            # Add logo
+            logo_label = tk.Label(form_frame, image=self.logo_photo, bg='white')
+            logo_label.pack(pady=10)
+        except FileNotFoundError:
+            print("Logo image not found!")
+
+        # Add fields to the form
+        ttk.Label(form_frame, text="Pilih Mutu Beton:", font=("Helvetica", 12), background='white').pack(pady=5)
         self.mutu_var = tk.StringVar(value="K100")
         mutu_options = ["K100", "K150", "K225", "K250", "K275", "K300"]
-        self.mutu_menu = ttk.Combobox(frame, textvariable=self.mutu_var, values=mutu_options, font=("Helvetica", 12))
-        self.mutu_menu.grid(row=0, column=1, pady=10, padx=10)
+        self.mutu_menu = ttk.Combobox(form_frame, textvariable=self.mutu_var, values=mutu_options, font=("Helvetica", 12))
+        self.mutu_menu.pack(pady=5)
 
-        self.add_label(frame, "Dimensi dan Jumlah Kolom", 1)
-        self.add_entry(frame, "Panjang Kolom (m):", 2)
-        self.add_entry(frame, "Lebar Kolom (m):", 3)
-        self.add_entry(frame, "Tinggi Kolom (m):", 4)
-        self.add_entry(frame, "Jumlah Kolom:", 5)
+        self.entry_frame = tk.Frame(form_frame, bg='white')
+        self.entry_frame.pack(pady=10)
 
-        self.add_label(frame, "Dimensi dan Jumlah Balok", 6)
-        self.add_entry(frame, "Panjang Balok (m):", 7)
-        self.add_entry(frame, "Lebar Balok (m):", 8)
-        self.add_entry(frame, "Tinggi Balok (m):", 9)
-        self.add_entry(frame, "Jumlah Balok:", 10)
+        self.entries = {}
 
-        self.add_label(frame, "Dimensi dan Jumlah Plat", 11)
-        self.add_entry(frame, "Panjang Plat (m):", 12)
-        self.add_entry(frame, "Lebar Plat (m):", 13)
-        self.add_entry(frame, "Tinggi Plat (m):", 14)
-        self.add_entry(frame, "Jumlah Plat:", 15)
+        # Divide labels into three columns
+        num_labels = len(self.labels)
+        num_columns = 3
+        labels_per_column = num_labels // num_columns
 
-        calculate_button = ttk.Button(frame, text="Hitung Kebutuhan Material", command=self.calculate, style="primary.TButton")
-        calculate_button.grid(row=16, columnspan=2, pady=20, padx=10)
+        for col in range(num_columns):
+            for i in range(col * labels_per_column, (col + 1) * labels_per_column):
+                label_text = self.labels[i]
+                label = ttk.Label(self.entry_frame, text=label_text, font=("Helvetica", 12), background='white')
+                label.grid(row=i % labels_per_column, column=col * 2, pady=2)
+                entry = ttk.Entry(self.entry_frame, font=("Helvetica", 12))
+                entry.grid(row=i % labels_per_column, column=col * 2 + 1, pady=2)
+                self.entries[label_text] = entry
 
-    def add_label(self, frame, label_text, row):
-        ttk.Label(frame, text=label_text, font=("Helvetica", 14, "bold")).grid(row=row, columnspan=2, pady=10, padx=10)
+        calculate_button = ttk.Button(form_frame, text="Hitung Kebutuhan Material", command=self.calculate)
+        calculate_button.pack(pady=20)
 
-    def add_entry(self, frame, label_text, row):
-        ttk.Label(frame, text=label_text, font=("Helvetica", 12)).grid(row=row, column=0, pady=5, padx=10)
-        entry = ttk.Entry(frame, font=("Helvetica", 12))
-        entry.grid(row=row, column=1, pady=5, padx=10)
-        setattr(self, f"entry_{row}", entry)
+        # Create a treeview widget for the table
+        self.tree = ttk.Treeview(form_frame, columns=("Material", "Kebutuhan"), show="headings")
+        self.tree.heading("Material", text="Material", anchor=tk.CENTER)
+        self.tree.heading("Kebutuhan", text="Kebutuhan", anchor=tk.CENTER)
+        self.tree.column("Material", anchor=tk.CENTER)
+        self.tree.column("Kebutuhan", anchor=tk.CENTER)
+        self.tree.pack(pady=10, expand=True, fill="both")
 
     def calculate(self):
         try:
-            panjang_kolom = float(self.entry_2.get())
-            lebar_kolom = float(self.entry_3.get())
-            tinggi_kolom = float(self.entry_4.get())
-            jumlah_kolom = int(self.entry_5.get())
+            # Collect input values
+            kolom_values = [float(self.entries[label].get()) for label in self.labels[:4]]
+            balok_values = [float(self.entries[label].get()) for label in self.labels[4:8]]
+            plat_values = [float(self.entries[label].get()) for label in self.labels[8:]]
 
-            panjang_balok = float(self.entry_7.get())
-            lebar_balok = float(self.entry_8.get())
-            tinggi_balok = float(self.entry_9.get())
-            jumlah_balok = int(self.entry_10.get())
+            # Calculate total volumes
+            total_volume_kolom = kolom_values[0] * kolom_values[1] * kolom_values[2] * kolom_values[3]
+            total_volume_balok = balok_values[0] * balok_values[1] * balok_values[2] * balok_values[3]
+            total_volume_plat = plat_values[0] * plat_values[1] * plat_values[2] * plat_values[3]
 
-            panjang_plat = float(self.entry_12.get())
-            lebar_plat = float(self.entry_13.get())
-            tinggi_plat = float(self.entry_14.get())
-            jumlah_plat = int(self.entry_15.get())
-
-            total_volume_kolom = panjang_kolom * lebar_kolom * tinggi_kolom * jumlah_kolom
-            total_volume_balok = panjang_balok * lebar_balok * tinggi_balok * jumlah_balok
-            total_volume_plat = panjang_plat * lebar_plat * tinggi_plat * jumlah_plat
-
+            # Calculate total volume
             total_volume = total_volume_kolom + total_volume_balok + total_volume_plat
 
+            # Get material ratios
             mutu = self.mutu_var.get()
-            S = Beton[mutu]['Semen']
-            P = Beton[mutu]['Pasir']
-            K = Beton[mutu]['Kerikil']
-            A = Beton[mutu]['Air']
+            S, P, K, A = Beton[mutu]['Semen'], Beton[mutu]['Pasir'], Beton[mutu]['Kerikil'], Beton[mutu]['Air']
 
+            # Calculate material needs
             semen = total_volume * S
             pasir = total_volume * P
             kerikil = total_volume * K
             air = total_volume * A
 
-            result = (
-                f"Kebutuhan Semen: {round(semen)} kg\n"
-                f"Kebutuhan Pasir: {round(pasir)} kg\n"
-                f"Kebutuhan Kerikil: {round(kerikil)} kg\n"
-                f"Kebutuhan Air: {round(air)} liter"
-            )
-            messagebox.showinfo("Hasil Perhitungan", result)
+            # Clear existing rows in the treeview
+            for row in self.tree.get_children():
+                self.tree.delete(row)
+
+            # Insert rows for each material
+            self.tree.insert("", "end", values=("Semen", round(semen, 2)))
+            self.tree.insert("", "end", values=("Pasir", round(pasir, 2)))
+            self.tree.insert("", "end", values=("Kerikil", round(kerikil, 2)))
+            self.tree.insert("", "end", values=("Air", round(air, 2)))
+
         except ValueError:
             messagebox.showerror("Error", "Input tidak valid. Pastikan semua nilai diisi dengan benar.")
+        except KeyError:
+            messagebox.showerror("Error", "Mutu beton tidak valid.")
+
 
 if __name__ == '__main__':
     root = tk.Tk()
